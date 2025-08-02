@@ -16,7 +16,7 @@ class BaseAgent(BaseModel, ABC):
         arbitrary_types_allowed = True
 
     @abstractmethod
-    async def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, context: Dict[str, Any]) -> Any:
         """
          Args:
             context (Dict[str, Any]): A dictionary that contains contextual information about the current problem and is passed between agents.
