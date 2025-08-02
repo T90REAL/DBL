@@ -9,7 +9,7 @@ class BaseAgent(BaseModel, ABC):
     """Base class for all agents."""
     name: str = Field(..., description="The unique name of the tool")
     description: Optional[str] = Field(default=None, description="Clear and brief description of the agent")
-    llm: BaseLLM = Field(..., description="The selected large language model (brain).")
+    llm: Optional[BaseLLM] = Field(None, description="The selected large language model (brain).")
     memory: list = Field([], description="The memory of the agent.")
 
     class Config:
