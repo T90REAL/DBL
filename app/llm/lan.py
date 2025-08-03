@@ -2,7 +2,7 @@ import ollama
 
 from app.llm.base import BaseLLM
 
-class LAN_LLM(BaseLLM):
+class LANLLM(BaseLLM):
     """
     This is a class for user to select the desired LLM and run it on your own Lan-server.
     """
