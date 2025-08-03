@@ -64,6 +64,10 @@ class BaseLLM(ABC):
                 "messages": messages,
                 # "options": {"temperature": 0}
             }
+
+            # TODO: some model does not contain the 'format_type' option, such as 'gemma'
+            # add a whitelist and use re?
+            # the deepseek reasoning model can support this option
             if format_type == "json":
                 chat_options["format"] = "json"
 
