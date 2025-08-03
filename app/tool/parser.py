@@ -7,6 +7,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from typing import List, Dict, Any
 
+from app.protocols import AgentMessage
+
+
 async def _write_to_file_async(file_path: Path, data: str):
     """Write data to a file asynchronously."""
     if data is None:
@@ -19,7 +22,7 @@ async def _write_to_file_async(file_path: Path, data: str):
         print(f"Error occurs when writing into file {file_path}: {e}")
 
 
-async def parse_contest_page(contest_url: str) -> List[str]:
+async def parse_contest_page(contest_url: str) -> AgentMessage:
     """
     Tool function: accesses the contest homepage and parses out the URLs of all the problems for that contest.
     
@@ -30,6 +33,7 @@ async def parse_contest_page(contest_url: str) -> List[str]:
         List[str]: Absolute URL of problems.
     """
     print(f"[Tool: parse_contest_page]: Parsing the contest page: {contest_url}")
+    source_name = "parse_contest_page"
     problem_urls = []
     try:
         tasks_url = contest_url.rstrip('/') + '/tasks'
@@ -44,31 +48,34 @@ async def parse_contest_page(contest_url: str) -> List[str]:
         
         if not task_rows:
             print("[Tool: parse_contest_page]: Warning: No subject lines were found.")
-            return []
-
-        for row in task_rows:
-            link_element = row.find("a")
-            if link_element and 'href' in link_element.attrs:
-                problem_path = link_element['href']
-                full_url = urljoin(tasks_url, problem_path)
-                if full_url not in problem_urls:
-                    problem_urls.append(full_url)
-        
-        if problem_urls:
-            print(f"[Tool: parse_contest_page]: Parsed successfully, found {len(problem_urls)} problems.")
         else:
-            print("[Tool: parse_contest_page]: WARNING: Although the title form was found, it failed to parse out any links.")
+            for row in task_rows:
+                link_element = row.find("a")
+                if link_element and 'href' in link_element.attrs:
+                    problem_path = link_element['href']
+                    full_url = urljoin(tasks_url, problem_path)
+                    if full_url not in problem_urls:
+                        problem_urls.append(full_url)
+            
+        print(f"[Tool: parse_contest_page]: Parsed successfully, found {len(problem_urls)} problems.")
 
-        return problem_urls
+        return AgentMessage(
+            source=source_name,
+            message_type="tool_result",
+            payload={"problem_urls": problem_urls}
+        )
 
-    except httpx.HTTPStatusError as e:
-        print(f"[Tool: parse_contest_page]: HTTP error when requesting a page: {e.response.status_code} {e.response.reason_phrase} for url {e.request.url}")
-        return []
     except Exception as e:
-        print(f"[Tool: parse_contest_page]: Error parsing contest page: {e}")
-        return []
+        error_msg = f"Error parsing contest page: {e}"
+        print(f"[Tool: parse_contest_page]: {error_msg}")
+        return AgentMessage(
+            status="failure",
+            source=source_name,
+            message_type="error",
+            error=error_msg
+        )
 
-async def parse_problem_page(problem_url: str, target_dir: Path) -> str:
+async def parse_problem_page(problem_url: str, target_dir: Path) -> AgentMessage:
     """
     Tool function: receives a problem URL, grabs and parses all the information and stores it in the specified folder.
 
@@ -80,6 +87,7 @@ async def parse_problem_page(problem_url: str, target_dir: Path) -> str:
         str: A summary string describing the results of the execution.
     """
     print(f"[Tool: parse_problem_page]: Start processing problem: {problem_url}")
+    source_name = "parse_problem_page"
     
     try:
         async with httpx.AsyncClient() as client:
@@ -87,9 +95,13 @@ async def parse_problem_page(problem_url: str, target_dir: Path) -> str:
             response.raise_for_status()
         soup = BeautifulSoup(response.text, "lxml")
     except Exception as e:
-        summary = f"Failed to access page: {e}"
-        print(f"[Tool: parse_problem_page]: {summary}")
-        return summary
+        error_msg = f"Failed to access page: {e}"
+        print(f"[Tool: parse_problem_page]: {error_msg}")
+        return AgentMessage(
+            status="failure", 
+            source=source_name, 
+            message_type="error", 
+            error=error_msg)
 
     description_text = "Description not found."
     title = "Title not found"
@@ -128,4 +140,9 @@ async def parse_problem_page(problem_url: str, target_dir: Path) -> str:
     
     summary = f"Successfully fetched the problem '{title}' into the folder: {target_dir}"
     print(f"[Tool: parse_problem_page]: {summary}")
-    return summary
+    
+    return AgentMessage(
+        source=source_name,
+        message_type="tool_result",
+        payload={"summary": summary, "target_dir": str(target_dir)}
+    )
