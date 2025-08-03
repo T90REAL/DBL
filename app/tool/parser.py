@@ -96,7 +96,13 @@ async def parse_problem_page(problem_url: str, target_dir: Path) -> str:
     
     if "atcoder.jp" in problem_url:
         title_element = soup.find("h2") or soup.find("span", class_="h2")
-        if title_element: title = title_element.text.strip()
+        if title_element: 
+            # fix: remove the 'Editorial' from title
+            editorial_link = title_element.find("a")
+            if editorial_link:
+                editorial_link.decompose()
+            
+            title = title_element.text.strip()
 
         desc_element = soup.find("span", class_="lang-en") or soup.find("div", id="task-statement")
         if desc_element: description_text = desc_element.get_text(separator=" ", strip=True)
