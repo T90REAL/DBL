@@ -27,3 +27,6 @@ class BaseAgent(BaseModel, ABC):
     async def _log(self, message: str):
         """Asynchronous logging that shows which agent is doing what."""
         print(f"[{self.name}]: {message}")
+
+    def clear(self):
+        self.memory.clear()
