@@ -110,16 +110,16 @@ class ProblemParserAgent(BaseAgent):
                         "output": output_pre.get_text()
                     })
 
-        # Preparing to write
+        # preparing to write
         write_tasks = []
         
-        # Write statement
+        # write statement
         description_content = f"# {title}\n\n**URL:** {problem_url}\n\n---\n\n{description_text}"
         write_tasks.append(self._write_to_file_async(target_dir / "problem.md", description_content))
         
         # write_tasks.append(self._write_to_file_async(target_dir / "limits.txt", limits_text))
         
-        # Write sample
+        # write sample
         for i, sample in enumerate(samples, 1):
             write_tasks.append(self._write_to_file_async(target_dir / f"sol_{i}.in", sample["input"]))
             write_tasks.append(self._write_to_file_async(target_dir / f"ans_{i}.out", sample["output"]))
@@ -132,11 +132,14 @@ class GetProblemAgent(BaseAgent):
     Dispatch 'ContestParserAgent' and 'ProblemParserAgent' to get the problems information of a specific contest.
     """
 
+    parsing_tasks: list = []
+    problem_dirs: list = []
+
     async def execute(self, contest_url: str):
         contest_parser = ContestParserAgent(name="ContestParser")
         problem_parser = ProblemParserAgent(name="ProblemParser")
 
-        # Obtaining links of all problems
+        # obtaining links of all problems
         problem_urls = await contest_parser.execute(contest_url)
         
         if not problem_urls:
@@ -155,7 +158,21 @@ class GetProblemAgent(BaseAgent):
             target_dir = base_dir / problem_id
             task = problem_parser.execute(problem_url=url, target_dir=target_dir)
             parsing_tasks.append(task)
+            self.problem_dirs.append(target_dir)
             
         await asyncio.gather(*parsing_tasks)
         
         print(f"\nAll problems are properly processed!")
+
+        # TODO: if generate more test case:
+
+        # generation_tasks = []
+        # for dir_path in self.problem_dirs:
+        #     problem_md_path = dir_path / "problem.md"
+        #     if problem_md_path.exists():
+        #         task = test_case_generator.execute(problem_md_path=problem_md_path, target_dir=dir_path)
+        #         generation_tasks.append(task)
+        #     else:
+        #         assert False, "The problem statement is not found."
+
+        # await asyncio.gather(*generation_tasks)
