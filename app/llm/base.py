@@ -10,7 +10,8 @@ class BaseLLM(ABC):
 
     def __init__(self, model_name: str):
         """
-        Initialize the LLM based on the name of the model
+        Initialize the LLM based on the name of the model.
+        NOTE: Using LLM.create(...) to create LLM is safer.
 
         Args:
             model_name (str): The model that is going to be used, such as "deepseek-r1:14b", "qwen3:8b"

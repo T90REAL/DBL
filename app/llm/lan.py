@@ -5,6 +5,7 @@ from app.llm.base import BaseLLM
 class LANLLM(BaseLLM):
     """
     This is a class for user to select the desired LLM and run it on your own Lan-server.
+    NOTE: Using LANLLM.create(...) to create LLM is safer.
     """
 
     def __init__(self, model_name: str, host: str):

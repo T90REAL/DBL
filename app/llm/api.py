@@ -1,10 +1,7 @@
 import os
 import sys
-from typing import Optional
-from datetime import datetime
-
 import openai
-
+from typing import Optional
 
 from app.agent.base import BaseLLM
 
@@ -12,6 +9,7 @@ class ApiLLM(BaseLLM):
     """
     A pure API LLM implementation for connecting to cloud services that require API keys (e.g. OpenAI, Groq, etc.).
     It uses the openai library as a generic interface.
+    NOTE: Using ApiLLM.create(...) to create LLM is safer.
     """
     def __init__(self, model_name: str, api_key: Optional[str] = None, base_url: Optional[str] = None):
         """
