@@ -17,9 +17,9 @@ async def generate_code(plan: dict, description: str, problem_dir: str, llm: Bas
     plan_str = json.dumps(plan, indent=2)
 
     prompt = f"""
-        You are a world-class competitive programmer, an expert in writing clean, efficient, and correct C++ code.
+        You are a world-class competitive programmer, an expert in writing clean, efficient, and correct Python code.
 
-        Your task is to write a complete and correct C++ solution for the following problem.
+        Your task is to write a complete and correct Python solution without comments for the following problem.
 
         ### Full Problem Description
         {description}
@@ -28,22 +28,23 @@ async def generate_code(plan: dict, description: str, problem_dir: str, llm: Bas
         {plan_str}
 
         ### Instructions
-        1.  Write a complete C++ program that solves the problem.
+        1.  Write a complete Python program that solves the problem.
         2.  Read all input from standard input (stdin).
         3.  Write all output to standard output (stdout).
-        4.  Your response MUST contain ONLY the raw C++ code. Do not include any extra text, explanations, or comments before or after the code.
-        5.  Enclose the code in a ```cpp ... ``` markdown block.
+        4.  Make sure it pass all the samples.
+        5.  Your response MUST contain ONLY the raw Python code. Do not include any extra text, explanations, or comments in the code.
+        6.  Enclose the code in a ```python ... ``` markdown block.
     """
     messages = [
-        {"role": "system", "content": "You are a world-class competitive programmer, an expert in writing clean, efficient, and correct C++ code."},
+        {"role": "system", "content": "You are a world-class competitive programmer, an expert in writing clean, efficient, and correct Python code without comments."},
         {"role": "user", "content": prompt}
     ]
-    
+
     try:
         response_str, _ = await llm.chat(messages)
         
         # use 're' to get code part
-        match = re.search(r"```cpp\s*\n(.*?)\n\s*```", response_str, re.DOTALL)
+        match = re.search(r"```python\s*\n(.*?)\n\s*```", response_str, re.DOTALL)
         if not match:
             # TODO: the output is not in the specific format, may cause some error
             code = response_str
@@ -55,10 +56,10 @@ async def generate_code(plan: dict, description: str, problem_dir: str, llm: Bas
             return AgentMessage(status="failure", source=source_name, message_type="error", error="LLM returned empty code.")
 
         target_path = Path(problem_dir)
-        code_file_path = target_path / "main.cpp"
+        code_file_path = target_path / "main.py"
         await _write_to_file_async(code_file_path, code)
         
-        summary = f"Successfully generated C++ code and saved to '{code_file_path}'."
+        summary = f"Successfully generated Python code and saved to '{code_file_path}'."
         print(f"[Tool: {source_name}]: {summary}")
         return AgentMessage(
             source=source_name,
